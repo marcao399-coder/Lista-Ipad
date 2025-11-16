@@ -1,0 +1,600 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <style>
+        /* ========== ESTILOS GERAIS ========== */
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #f0f2f5; 
+            font-size: 18px; /* AUMENTEI TODAS AS FONTES */
+        }
+        .container { 
+            max-width: 100%; 
+            margin: 0 auto; 
+            background: white; 
+            min-height: 100vh;
+        }
+        
+        /* ========== CABEÇALHO ========== */
+        .header { 
+            background: #4facfe; 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            position: relative;
+        }
+        .header h1 {
+            margin: 0 0 12px 0;
+            font-size: 24px; /* AUMENTADO */
+            font-weight: bold;
+        }
+        .month-selector {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            margin: 0 auto;
+            border-radius: 8px;
+            max-width: 220px;
+        }
+        .month-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            font-size: 16px; /* AUMENTADO */
+            font-weight: bold;
+        }
+        .save-button {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 20px; /* AUMENTADO */
+            cursor: pointer;
+        }
+        
+        /* ========== ABAS ========== */
+        .tabs { 
+            display: flex; 
+            background: white; 
+            border-bottom: 2px solid #e1e8ff;
+            overflow-x: auto;
+        }
+        .tab { 
+            flex: 1; 
+            padding: 16px 8px; 
+            text-align: center; 
+            background: transparent; 
+            border: none; 
+            font-size: 15px; /* AUMENTADO */
+            cursor: pointer; 
+            border-bottom: 3px solid transparent;
+            min-width: 75px;
+            font-weight: bold;
+        }
+        .tab.active { 
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            background: #f8f9ff;
+        }
+        
+        /* ========== PÁGINAS ========== */
+        .page { 
+            display: none; 
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+        .page.active { 
+            display: block; 
+        }
+        
+        /* ========== ORÇAMENTO ========== */
+        .budget-section {
+            padding: 20px;
+            background: #f8f9ff;
+            border-bottom: 2px solid #e1e8ff;
+        }
+        .budget-grid {
+            display: flex;
+            justify-content: space-between;
+        }
+        .budget-card {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            margin: 0 6px;
+            border: 2px solid transparent;
+        }
+        .budget-card.initial { border-color: #4facfe; }
+        .budget-card.spent { border-color: #ff6b6b; }
+        .budget-card.remaining { border-color: #51cf66; }
+        .budget-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 20px; /* AUMENTADO */
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .budget-value {
+            font-size: 20px; /* AUMENTADO */
+            font-weight: bold;
+            padding: 10px;
+        }
+        
+        /* ========== LOJAS ========== */
+        .store-total-card {
+            background: #4facfe;
+            color: white;
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .store-total-card div:first-child {
+            font-size: 18px; /* AUMENTADO */
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .store-total-card div:nth-child(2) {
+            font-size: 24px; /* AUMENTADO */
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .store-total-card div:last-child {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* ========== GRUPOS DE PRODUTOS ========== */
+        .group-header {
+            background: #667eea;
+            color: white;
+            padding: 14px 15px;
+            margin: 18px -15px 8px -15px;
+            font-size: 17px; /* AUMENTADO */
+            font-weight: bold;
+        }
+        
+        /* ========== LABELS DAS COLUNAS ========== */
+        .column-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: #f8f9ff;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 1px solid #e1e8ff;
+            margin: 0 -5px 8px -5px;
+        }
+        .column-labels span {
+            text-align: center;
+            padding: 0 5px;
+        }
+        .column-labels span:nth-child(1) { /* PRODUTO */
+            width: 40%;
+            text-align: left;
+        }
+        .column-labels span:nth-child(2) { /* QTD */
+            width: 15%;
+        }
+        .column-labels span:nth-child(3) { /* VALOR */
+            width: 20%;
+        }
+        .column-labels span:nth-child(4) { /* TOTAL */
+            width: 25%;
+        }
+        
+        /* ========== ITENS DE PRODUTO ========== */
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border: 1px solid #f1f3f4;
+            border-radius: 8px;
+            padding: 12px 8px;
+            margin-bottom: 10px;
+        }
+        .product-info {
+            width: 40%;
+        }
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 16px; /* AUMENTADO */
+        }
+        .quantity-input, .price-input {
+            width: 100%;
+            padding: 12px 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 16px; /* AUMENTADO */
+            font-weight: bold;
+        }
+        .quantity-input {
+            width: 15%;
+            margin: 0 2px;
+        }
+        .price-input {
+            width: 20%;
+            margin: 0 2px;
+        }
+        .total-display {
+            font-weight: bold;
+            color: #333;
+            width: 25%;
+            text-align: center;
+            padding: 12px 5px;
+            font-size: 16px; /* AUMENTADO */
+        }
+        
+        /* ========== RESUMO ========== */
+        .summary-card {
+            background: #f8f9ff;
+            border: 2px solid #e1e8ff;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e8ff;
+            font-size: 17px; /* AUMENTADO */
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px; /* AUMENTADO */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Lista de Compras</h1>
+            <div class="month-selector">
+                <select id="month-select">
+                    <!-- Meses carregados pelo JavaScript -->
+                </select>
+            </div>
+            <button class="save-button" onclick="saveAllData()" title="Salvar dados">💾</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" id="tab1">💰 Orçamento</button>
+            <button class="tab" id="tab2">🏪 Nagumo</button>
+            <button class="tab" id="tab3">🛒 Assaí</button>
+            <button class="tab" id="tab4">🥬 Sacolão</button>
+            <button class="tab" id="tab5">📊 Resumo</button>
+        </div>
+
+        <!-- Página Orçamento -->
+        <div id="page1" class="page active">
+            <div class="budget-section">
+                <div class="budget-grid">
+                    <div class="budget-card initial">
+                        <div>Valor inicial</div>
+                        <input type="number" class="budget-input" id="initial-budget" placeholder="0,00" step="0.01">
+                    </div>
+                    <div class="budget-card spent">
+                        <div>Total Gasto</div>
+                        <div class="budget-value" id="spent-value">R$ 0,00</div>
+                    </div>
+                    <div class="budget-card remaining">
+                        <div>Saldo Restante</div>
+                        <div class="budget-value" id="remaining-value">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Nagumo -->
+        <div id="page2" class="page">
+            <div class="store-total-card">
+                <div>Total Nagumo</div>
+                <div id="nagumo-total">R$ 0,00</div>
+                <div>Aceita V.A e V.R</div>
+            </div>
+            <div id="nagumo-list"></div>
+        </div>
+
+        <!-- Página Assaí -->
+        <div id="page3" class="page">
+            <div class="store-total-card">
+                <div>Total Assaí</div>
+                <div id="assai-total">R$ 0,00</div>
+                <div>Aceita apenas V.A</div>
+            </div>
+            <div id="assai-list"></div>
+        </div>
+
+        <!-- Página Sacolão -->
+        <div id="page4" class="page">
+            <div class="store-total-card">
+                <div>Total Sacolão</div>
+                <div id="sacolao-total">R$ 0,00</div>
+                <div>Não aceita vouchers</div>
+            </div>
+            <div id="sacolao-list"></div>
+        </div>
+
+        <!-- Página Resumo -->
+        <div id="page5" class="page">
+            <div class="summary-card" id="summary-content">
+                <div class="summary-row">
+                    <span>Carregando resumo...</span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== LISTAS COMPLETAS DE PRODUTOS ==========
+        var produtosNagumo = [
+            {grupo: "🛒 Básicos", itens: ["Arroz", "Feijão", "Açúcar", "Sal", "Farinha Trigo", "Maisena", "Tapioca"]},
+            {grupo: "🍝 Massas", itens: ["Macarrão Penne", "Macarrão Espaguete", "Molho Pronto"]},
+            {grupo: "🫒 Óleos e Temperos", itens: ["Óleo Soja", "Azeite", "Óleo Carmelita", "Vinagre", "Sazon Sachê"]},
+            {grupo: "🥫 Conservas", itens: ["Milho Lata"]},
+            {grupo: "🥤 Bebidas", itens: ["Café", "Nescau", "Guaraná Zero 2L", "Pepsi Zero 2L", "Sprite Zero 2L"]},
+            {grupo: "🥛 Laticínios", itens: ["Leite 1L", "Margarina", "Creme Leite", "Leite Condensado", "Leite Moça"]},
+            {grupo: "🧴 Condimentos", itens: ["Maionese", "Katchp", "Mostarda"]},
+            {grupo: "🍞 Pães e Biscoitos", itens: ["Pão Forma", "Bisnaguinha", "Bolacha Waffer", "Rosq. Côco", "Bolacha Maisena", "Bolacha Club Social"]},
+            {grupo: "🔧 Utilidades", itens: ["Coador", "Ovos 20 unid"]},
+            {grupo: "🍿 Salgadinhos", itens: ["Salgadinho", "Pipoca Doce", "Salgadinhos"]},
+            {grupo: "🥩 Carnes", itens: ["Toscana granel", "Carne Moída", "Carne Bife", "Carne Panela"]},
+            {grupo: "🧀 Frios", itens: ["Mussarela", "Presunto", "Pão Francês"]},
+            {grupo: "🍎 Frutas", itens: ["Laranja", "Banana", "Maçã", "Manga", "Pera"]},
+            {grupo: "🥬 Verduras e Legumes", itens: ["Alface", "Tomate", "Cebola", "Batata", "Pepino"]},
+            {grupo: "🧼 Higiene", itens: ["Papel toalha", "Papel Hig. 24rl", "Papel Hig. 32rl", "Shampoo", "Desodorante", "Sabonete", "Pasta de Dente"]},
+            {grupo: "🧽 Limpeza", itens: ["Sabão", "Amaciante", "Detergente", "Desinfetante", "Água Sanitária", "Pedra Vaso"]}
+        ];
+
+        var produtosAssai = [
+            {grupo: "❄️ Congelados", itens: ["Frango Congelado", "Calabresa PCT", "Toscana PCT", "Nuguets PCT", "Hamburguer CX", "Batata Palito", "Salsicha PCT", "Legumes Congelados"]},
+            {grupo: "🥛 Laticínios", itens: ["Leite Cx", "Iogurte Natural", "Iogurte Sabor", "Margarina 500g", "Requijão"]},
+            {grupo: "🫒 Óleos e Conservas", itens: ["Carmelita", "Azeite", "Atum"]},
+            {grupo: "🥚 Ovos e Frios", itens: ["Ovos 20 unid", "Mussarela", "Presunto", "Peito Frango Def."]},
+            {grupo: "🌾 Farinhas e Temperos", itens: ["Farinha de Rosca"]},
+            {grupo: "🍿 Salgadinhos e Bebidas", itens: ["Salgadinhos", "Guaraná Zero 2L", "Pepsi Zero 2L", "Sprite Zero 2L"]},
+            {grupo: "🍞 Pães e Biscoitos", itens: ["Pão Francês", "Pão de Forma", "Bisnaguinha", "Bolacha Waffer", "Bolacha recheada", "Bolacha Maisena", "Pipoca Doce", "Milho de Pipoca"]},
+            {grupo: "🍎 Frutas", itens: ["Banana", "Maçã", "Pera", "Laranja", "Morango", "Mamão", "Limão", "Ciciliano"]},
+            {grupo: "🥬 Verduras e Legumes", itens: ["Tomate", "Alface", "Pepino", "Brócolis", "Cebola"]}
+        ];
+
+        var produtosSacolao = [
+            {grupo: "🍎 Frutas", itens: ["Banana", "Maçã", "Pera", "Laranja", "Manga", "Mamão", "Limão", "Ceciliano", "Morango"]},
+            {grupo: "🥬 Verduras e Legumes", itens: ["Tomate", "Alface", "Cebola", "Batata", "Cenoura", "Pepino", "Brócolis", "Repolho", "Couve", "Couve Flor"]}
+        ];
+
+        // ========== SISTEMA SIMPLES DE MESES ==========
+        function carregarMeses() {
+            var select = document.getElementById('month-select');
+            select.innerHTML = '';
+            
+            // Meses fixos para compatibilidade com iPad antigo
+            var meses = [
+                'Novembro 2025', 'Dezembro 2025',
+                'Janeiro 2026', 'Fevereiro 2026', 'Março 2026', 'Abril 2026', 'Maio 2026', 'Junho 2026',
+                'Julho 2026', 'Agosto 2026', 'Setembro 2026', 'Outubro 2026', 'Novembro 2026', 'Dezembro 2026',
+                'Janeiro 2027', 'Fevereiro 2027', 'Março 2027', 'Abril 2027', 'Maio 2027', 'Junho 2027',
+                'Julho 2027', 'Agosto 2027', 'Setembro 2027', 'Outubro 2027', 'Novembro 2027', 'Dezembro 2027',
+                'Janeiro 2028', 'Fevereiro 2028', 'Março 2028', 'Abril 2028', 'Maio 2028', 'Junho 2028',
+                'Julho 2028', 'Agosto 2028', 'Setembro 2028', 'Outubro 2028', 'Novembro 2028', 'Dezembro 2028',
+                'Janeiro 2029', 'Fevereiro 2029', 'Março 2029', 'Abril 2029', 'Maio 2029', 'Junho 2029',
+                'Julho 2029', 'Agosto 2029', 'Setembro 2029', 'Outubro 2029', 'Novembro 2029', 'Dezembro 2029',
+                'Janeiro 2030', 'Fevereiro 2030', 'Março 2030', 'Abril 2030', 'Maio 2030', 'Junho 2030',
+                'Julho 2030', 'Agosto 2030', 'Setembro 2030', 'Outubro 2030', 'Novembro 2030', 'Dezembro 2030'
+            ];
+            
+            for (var i = 0; i < meses.length; i++) {
+                var option = document.createElement('option');
+                option.value = 'mes-' + i;
+                option.textContent = meses[i];
+                select.appendChild(option);
+            }
+            
+            // Selecionar o mês atual (Novembro 2025)
+            select.selectedIndex = 0;
+        }
+
+        // ========== SISTEMA DE NAVEGAÇÃO SIMPLES ==========
+        function showPage(pageNumber) {
+            // Esconder todas as páginas
+            var pages = document.getElementsByClassName('page');
+            for (var i = 0; i < pages.length; i++) {
+                pages[i].style.display = 'none';
+                pages[i].className = 'page';
+            }
+            
+            // Remover active de todas as abas
+            var tabs = document.getElementsByClassName('tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].className = 'tab';
+            }
+            
+            // Mostrar página selecionada
+            document.getElementById('page' + pageNumber).style.display = 'block';
+            document.getElementById('page' + pageNumber).className = 'page active';
+            document.getElementById('tab' + pageNumber).className = 'tab active';
+            
+            // Atualizar resumo se for a página 5
+            if (pageNumber === 5) {
+                atualizarResumo();
+            }
+        }
+
+        // ========== CARREGAR LISTAS DE PRODUTOS ==========
+        function carregarListas() {
+            carregarLista('nagumo-list', produtosNagumo);
+            carregarLista('assai-list', produtosAssai);
+            carregarLista('sacolao-list', produtosSacolao);
+        }
+
+        function carregarLista(elementId, produtos) {
+            var lista = document.getElementById(elementId);
+            lista.innerHTML = '';
+            
+            for (var g = 0; g < produtos.length; g++) {
+                var grupo = produtos[g];
+                
+                // Cabeçalho do grupo
+                var header = document.createElement('div');
+                header.className = 'group-header';
+                header.textContent = grupo.grupo;
+                lista.appendChild(header);
+                
+                // Labels das colunas
+                var labels = document.createElement('div');
+                labels.className = 'column-labels';
+                labels.innerHTML = '<span>PRODUTO</span><span>QTD</span><span>VALOR</span><span>TOTAL</span>';
+                lista.appendChild(labels);
+                
+                // Itens do grupo
+                for (var i = 0; i < grupo.itens.length; i++) {
+                    var item = document.createElement('div');
+                    item.className = 'product-item';
+                    
+                    var produtoHTML = '<div class="product-info">';
+                    produtoHTML += '<div class="product-name">' + grupo.itens[i] + '</div>';
+                    produtoHTML += '</div>';
+                    produtoHTML += '<input type="number" class="quantity-input" placeholder="0" value="0" min="0" onfocus="this.select()" onchange="calcularTotais()">';
+                    produtoHTML += '<input type="number" class="price-input" placeholder="0.00" value="0" step="0.01" min="0" onfocus="this.select()" onchange="calcularTotais()">';
+                    produtoHTML += '<div class="total-display">R$ 0,00</div>';
+                    
+                    item.innerHTML = produtoHTML;
+                    lista.appendChild(item);
+                }
+            }
+        }
+
+        // ========== CÁLCULOS SIMPLES ==========
+        function calcularTotais() {
+            // Calcular totais por loja
+            calcularTotalLoja('nagumo-list', 'nagumo-total');
+            calcularTotalLoja('assai-list', 'assai-total');
+            calcularTotalLoja('sacolao-list', 'sacolao-total');
+            
+            // Atualizar orçamento
+            atualizarOrcamento();
+        }
+
+        function calcularTotalLoja(listaId, totalId) {
+            var lista = document.getElementById(listaId);
+            var itens = lista.getElementsByClassName('product-item');
+            var totalGeral = 0;
+            
+            for (var i = 0; i < itens.length; i++) {
+                var inputs = itens[i].getElementsByTagName('input');
+                var quantidade = parseFloat(inputs[0].value) || 0;
+                var preco = parseFloat(inputs[1].value) || 0;
+                var total = quantidade * preco;
+                
+                // Atualizar display do total do item
+                var totalDisplay = itens[i].getElementsByClassName('total-display')[0];
+                totalDisplay.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+                
+                totalGeral += total;
+            }
+            
+            // Atualizar total da loja
+            document.getElementById(totalId).textContent = 'R$ ' + totalGeral.toFixed(2).replace('.', ',');
+        }
+
+        function atualizarOrcamento() {
+            var orcamento = parseFloat(document.getElementById('initial-budget').value) || 0;
+            var totalNagumo = parseFloat(document.getElementById('nagumo-total').textContent.replace('R$ ', '').replace(',', '.')) || 0;
+            var totalAssai = parseFloat(document.getElementById('assai-total').textContent.replace('R$ ', '').replace(',', '.')) || 0;
+            var totalSacolao = parseFloat(document.getElementById('sacolao-total').textContent.replace('R$ ', '').replace(',', '.')) || 0;
+            
+            var totalGasto = totalNagumo + totalAssai + totalSacolao;
+            var saldo = orcamento - totalGasto;
+            
+            document.getElementById('spent-value').textContent = 'R$ ' + totalGasto.toFixed(2).replace('.', ',');
+            document.getElementById('remaining-value').textContent = 'R$ ' + saldo.toFixed(2).replace('.', ',');
+            
+            // Cor do saldo
+            var saldoElement = document.getElementById('remaining-value');
+            if (saldo < 0) {
+                saldoElement.style.color = '#ff6b6b';
+            } else {
+                saldoElement.style.color = '#51cf66';
+            }
+        }
+
+        function atualizarResumo() {
+            var orcamento = parseFloat(document.getElementById('initial-budget').value) || 0;
+            var totalGasto = parseFloat(document.getElementById('spent-value').textContent.replace('R$ ', '').replace(',', '.')) || 0;
+            var saldo = orcamento - totalGasto;
+            var mesSelecionado = document.getElementById('month-select').options[document.getElementById('month-select').selectedIndex].text;
+            
+            var resumoHTML = '';
+            resumoHTML += '<div class="summary-row"><span>📅 Mês:</span><span>' + mesSelecionado + '</span></div>';
+            resumoHTML += '<div class="summary-row"><span>💰 Orçamento:</span><span>R$ ' + orcamento.toFixed(2).replace('.', ',') + '</span></div>';
+            resumoHTML += '<div class="summary-row"><span>🏪 Nagumo:</span><span>' + document.getElementById('nagumo-total').textContent + '</span></div>';
+            resumoHTML += '<div class="summary-row"><span>🛒 Assaí:</span><span>' + document.getElementById('assai-total').textContent + '</span></div>';
+            resumoHTML += '<div class="summary-row"><span>🥬 Sacolão:</span><span>' + document.getElementById('sacolao-total').textContent + '</span></div>';
+            resumoHTML += '<div class="summary-row"><span>💸 Total Gasto:</span><span>R$ ' + totalGasto.toFixed(2).replace('.', ',') + '</span></div>';
+            resumoHTML += '<div class="summary-row"><span>💵 Saldo:</span><span style="color: ' + (saldo >= 0 ? '#51cf66' : '#ff6b6b') + '">R$ ' + saldo.toFixed(2).replace('.', ',') + '</span></div>';
+            
+            document.getElementById('summary-content').innerHTML = resumoHTML;
+        }
+
+        // ========== EVENT LISTENERS COMPATÍVEIS ==========
+        function configurarEventos() {
+            document.getElementById('tab1').onclick = function() { showPage(1); };
+            document.getElementById('tab2').onclick = function() { showPage(2); };
+            document.getElementById('tab3').onclick = function() { showPage(3); };
+            document.getElementById('tab4').onclick = function() { showPage(4); };
+            document.getElementById('tab5').onclick = function() { showPage(5); };
+            
+            document.getElementById('initial-budget').oninput = function() {
+                atualizarOrcamento();
+                if (document.getElementById('page5').style.display === 'block') {
+                    atualizarResumo();
+                }
+            };
+            
+            document.getElementById('month-select').onchange = function() {
+                if (document.getElementById('page5').style.display === 'block') {
+                    atualizarResumo();
+                }
+            };
+        }
+
+        function saveAllData() {
+            alert('💾 Dados salvos com sucesso para ' + document.getElementById('month-select').options[document.getElementById('month-select').selectedIndex].text + '!');
+        }
+
+        // ========== INICIALIZAÇÃO ==========
+        function inicializar() {
+            carregarMeses();
+            carregarListas();
+            configurarEventos();
+            showPage(1);
+        }
+
+        // Iniciar quando a página carregar
+        window.onload = inicializar;
+    </script>
+</body>
+</html>
