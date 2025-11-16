@@ -1,0 +1,390 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            margin: 0; 
+            padding: 0; 
+            background: #f0f2f5; 
+        }
+        .container { 
+            max-width: 100%; 
+            margin: 0 auto; 
+            background: white; 
+            min-height: 100vh;
+        }
+        .header { 
+            background: #4facfe; 
+            color: white; 
+            padding: 20px 15px; 
+            text-align: center; 
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .month-selector {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+        .month-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+        }
+        .tabs { 
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex; 
+            background: white; 
+            border-bottom: 2px solid #e1e8ff;
+            overflow-x: auto;
+        }
+        .tab { 
+            -webkit-box-flex: 1;
+            -ms-flex: 1; 
+            flex: 1; 
+            padding: 15px 10px; 
+            text-align: center; 
+            background: transparent; 
+            border: none; 
+            font-size: 14px; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent;
+            min-width: 80px;
+        }
+        .tab.active { 
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            background: #f8f9ff;
+        }
+        .page { 
+            display: none; 
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+        .page.active { 
+            display: block; 
+        }
+        .budget-section {
+            padding: 20px;
+            background: #f8f9ff;
+            border-bottom: 2px solid #e1e8ff;
+        }
+        .budget-grid {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+        }
+        .budget-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            margin: 0 5px;
+            border: 2px solid transparent;
+        }
+        .budget-card.initial { border-color: #4facfe; }
+        .budget-card.spent { border-color: #ff6b6b; }
+        .budget-card.remaining { border-color: #51cf66; }
+        .budget-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            text-align: center;
+            padding: 8px;
+        }
+        .budget-value {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px;
+        }
+        .store-total-card {
+            background: #4facfe;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .group-header {
+            background: #667eea;
+            color: white;
+            padding: 12px 15px;
+            margin: 15px -15px 10px -15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .product-item {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            background: white;
+            border: 1px solid #f1f3f4;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .product-info {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+        }
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .quantity-input, .price-input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            margin: 0 5px;
+        }
+        .total-display {
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            text-align: center;
+        }
+        .summary-card {
+            background: #f8f9ff;
+            border: 2px solid #e1e8ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .summary-row {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+        .save-button {
+            position: fixed;
+            right: 15px;
+            bottom: 20px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Lista de Compras</h1>
+            <div class="month-selector">
+                <select id="month-select">
+                    <option value="2024-01">Janeiro 2024</option>
+                    <option value="2024-02">Fevereiro 2024</option>
+                    <option value="2024-03">Março 2024</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" id="tab1">Orçamento</button>
+            <button class="tab" id="tab2">Nagumo</button>
+            <button class="tab" id="tab3">Assaí</button>
+            <button class="tab" id="tab4">Sacolão</button>
+            <button class="tab" id="tab5">Resumo</button>
+        </div>
+
+        <!-- Página Orçamento -->
+        <div id="page1" class="page active">
+            <div class="budget-section">
+                <div class="budget-grid">
+                    <div class="budget-card initial">
+                        <div>Valor inicial</div>
+                        <input type="number" class="budget-input" id="initial-budget" placeholder="0,00">
+                    </div>
+                    <div class="budget-card spent">
+                        <div>Gasto</div>
+                        <div class="budget-value" id="spent-value">R$ 0,00</div>
+                    </div>
+                    <div class="budget-card remaining">
+                        <div>Sobram</div>
+                        <div class="budget-value" id="remaining-value">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Nagumo -->
+        <div id="page2" class="page">
+            <div class="store-total-card">
+                <div>Total Nagumo</div>
+                <div style="font-size: 20px; font-weight: bold;" id="nagumo-total">R$ 0,00</div>
+                <div style="font-size: 12px; opacity: 0.8;">Aceita V.A e V.R</div>
+            </div>
+            <div id="nagumo-list"></div>
+        </div>
+
+        <!-- Página Assaí -->
+        <div id="page3" class="page">
+            <div class="store-total-card">
+                <div>Total Assaí</div>
+                <div style="font-size: 20px; font-weight: bold;" id="assai-total">R$ 0,00</div>
+                <div style="font-size: 12px; opacity: 0.8;">Aceita apenas V.A</div>
+            </div>
+            <div id="assai-list"></div>
+        </div>
+
+        <!-- Página Sacolão -->
+        <div id="page4" class="page">
+            <div class="store-total-card">
+                <div>Total Sacolão</div>
+                <div style="font-size: 20px; font-weight: bold;" id="sacolao-total">R$ 0,00</div>
+                <div style="font-size: 12px; opacity: 0.8;">Não aceita vouchers</div>
+            </div>
+            <div id="sacolao-list"></div>
+        </div>
+
+        <!-- Página Resumo -->
+        <div id="page5" class="page">
+            <div class="summary-card" id="summary-content">
+                <div class="summary-row">
+                    <span>Mês:</span>
+                    <span>Janeiro 2024</span>
+                </div>
+                <div class="summary-row">
+                    <span>Orçamento:</span>
+                    <span>R$ 0,00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total Gasto:</span>
+                    <span>R$ 0,00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Saldo:</span>
+                    <span>R$ 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="save-button" onclick="saveAllData()">💾</button>
+    </div>
+
+    <script>
+        // Dados dos produtos (versão simplificada)
+        var produtosNagumo = [
+            {grupo: "Básicos", itens: ["Arroz", "Feijão", "Açúcar", "Sal"]},
+            {grupo: "Massas", itens: ["Macarrão Penne", "Macarrão Espaguete"]},
+            {grupo: "Laticínios", itens: ["Leite", "Margarina", "Queijo"]}
+        ];
+
+        var produtosAssai = [
+            {grupo: "Congelados", itens: ["Frango", "Calabresa", "Hambúrguer"]},
+            {grupo: "Frutas", itens: ["Banana", "Maçã", "Laranja"]}
+        ];
+
+        var produtosSacolao = [
+            {grupo: "Frutas", itens: ["Banana", "Maçã", "Pera", "Manga"]},
+            {grupo: "Verduras", itens: ["Alface", "Tomate", "Cebola", "Batata"]}
+        ];
+
+        // Sistema de navegação
+        function showPage(pageNumber) {
+            var pages = document.querySelectorAll('.page');
+            for (var i = 0; i < pages.length; i++) {
+                pages[i].style.display = 'none';
+                pages[i].className = 'page';
+            }
+            
+            var tabs = document.querySelectorAll('.tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].className = 'tab';
+            }
+            
+            document.getElementById('page' + pageNumber).style.display = 'block';
+            document.getElementById('page' + pageNumber).className = 'page active';
+            document.getElementById('tab' + pageNumber).className = 'tab active';
+        }
+
+        // Carregar listas de produtos
+        function carregarListas() {
+            carregarLista('nagumo-list', produtosNagumo);
+            carregarLista('assai-list', produtosAssai);
+            carregarLista('sacolao-list', produtosSacolao);
+        }
+
+        function carregarLista(elementId, produtos) {
+            var lista = document.getElementById(elementId);
+            lista.innerHTML = '';
+            
+            for (var g = 0; g < produtos.length; g++) {
+                var grupo = produtos[g];
+                
+                var header = document.createElement('div');
+                header.className = 'group-header';
+                header.textContent = grupo.grupo;
+                lista.appendChild(header);
+                
+                for (var i = 0; i < grupo.itens.length; i++) {
+                    var item = document.createElement('div');
+                    item.className = 'product-item';
+                    item.innerHTML = '<div class="product-info"><div class="product-name">' + grupo.itens[i] + '</div></div>' +
+                                   '<input type="number" class="quantity-input" placeholder="Qtd" value="0">' +
+                                   '<input type="number" class="price-input" placeholder="0.00" value="0">' +
+                                   '<div class="total-display">R$ 0,00</div>';
+                    lista.appendChild(item);
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('tab1').onclick = function() { showPage(1); };
+        document.getElementById('tab2').onclick = function() { showPage(2); };
+        document.getElementById('tab3').onclick = function() { showPage(3); };
+        document.getElementById('tab4').onclick = function() { showPage(4); };
+        document.getElementById('tab5').onclick = function() { showPage(5); };
+
+        document.getElementById('initial-budget').oninput = function() {
+            var budget = parseFloat(this.value) || 0;
+            document.getElementById('remaining-value').textContent = 'R$ ' + budget.toFixed(2);
+        };
+
+        function saveAllData() {
+            alert('Dados salvos!');
+        }
+
+        // Inicializar
+        window.onload = function() {
+            showPage(1);
+            carregarListas();
+        };
+    </script>
+</body>
+</html>
