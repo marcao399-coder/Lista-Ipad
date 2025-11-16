@@ -1,0 +1,582 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            margin: 0; 
+            padding: 0; 
+            background: #f0f2f5; 
+        }
+        .container { 
+            max-width: 100%; 
+            margin: 0 auto; 
+            background: white; 
+            min-height: 100vh;
+        }
+        .header { 
+            background: #4facfe; 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            position: relative;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+        }
+        .month-selector {
+            background: rgba(255,255,255,0.2);
+            padding: 8px;
+            margin: 0 auto;
+            border-radius: 8px;
+            max-width: 200px;
+        }
+        .month-selector select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            font-size: 14px;
+        }
+        .save-button {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .tabs { 
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex; 
+            background: white; 
+            border-bottom: 2px solid #e1e8ff;
+            overflow-x: auto;
+        }
+        .tab { 
+            -webkit-box-flex: 1;
+            -ms-flex: 1; 
+            flex: 1; 
+            padding: 15px 8px; 
+            text-align: center; 
+            background: transparent; 
+            border: none; 
+            font-size: 13px; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent;
+            min-width: 70px;
+        }
+        .tab.active { 
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            background: #f8f9ff;
+        }
+        .page { 
+            display: none; 
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+        .page.active { 
+            display: block; 
+        }
+        .budget-section {
+            padding: 20px;
+            background: #f8f9ff;
+            border-bottom: 2px solid #e1e8ff;
+        }
+        .budget-grid {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+        }
+        .budget-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            margin: 0 5px;
+            border: 2px solid transparent;
+        }
+        .budget-card.initial { border-color: #4facfe; }
+        .budget-card.spent { border-color: #ff6b6b; }
+        .budget-card.remaining { border-color: #51cf66; }
+        .budget-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            text-align: center;
+            padding: 8px;
+        }
+        .budget-value {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px;
+        }
+        .store-total-card {
+            background: #4facfe;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .group-header {
+            background: #667eea;
+            color: white;
+            padding: 12px 15px;
+            margin: 15px -15px 5px -15px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .column-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 15px;
+            background: #f8f9ff;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 1px solid #e1e8ff;
+        }
+        .column-labels span {
+            flex: 1;
+            text-align: center;
+        }
+        .column-labels span:first-child {
+            flex: 2;
+            text-align: left;
+        }
+        .product-item {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            background: white;
+            border: 1px solid #f1f3f4;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .product-info {
+            -webkit-box-flex: 2;
+            -ms-flex: 2;
+            flex: 2;
+        }
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .quantity-input, .price-input {
+            width: 70px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            margin: 0 2px;
+            font-size: 14px;
+        }
+        .total-display {
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            text-align: center;
+            padding: 10px 5px;
+        }
+        .summary-card {
+            background: #f8f9ff;
+            border: 2px solid #e1e8ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .summary-row {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e8ff;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Lista de Compras</h1>
+            <div class="month-selector">
+                <select id="month-select">
+                    <!-- Os meses serão carregados pelo JavaScript -->
+                </select>
+            </div>
+            <button class="save-button" onclick="saveAllData()" title="Salvar dados">💾</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" id="tab1">Orçamento</button>
+            <button class="tab" id="tab2">Nagumo</button>
+            <button class="tab" id="tab3">Assaí</button>
+            <button class="tab" id="tab4">Sacolão</button>
+            <button class="tab" id="tab5">Resumo</button>
+        </div>
+
+        <!-- Página Orçamento -->
+        <div id="page1" class="page active">
+            <div class="budget-section">
+                <div class="budget-grid">
+                    <div class="budget-card initial">
+                        <div>Valor inicial</div>
+                        <input type="number" class="budget-input" id="initial-budget" placeholder="0,00" step="0.01">
+                    </div>
+                    <div class="budget-card spent">
+                        <div>Gasto</div>
+                        <div class="budget-value" id="spent-value">R$ 0,00</div>
+                    </div>
+                    <div class="budget-card remaining">
+                        <div>Sobram</div>
+                        <div class="budget-value" id="remaining-value">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Nagumo -->
+        <div id="page2" class="page">
+            <div class="store-total-card">
+                <div>Total Nagumo</div>
+                <div style="font-size: 20px; font-weight: bold;" id="nagumo-total">R$ 0,00</div>
+                <div style="font-size: 12px; opacity: 0.8;">Aceita V.A e V.R</div>
+            </div>
+            <div id="nagumo-list"></div>
+        </div>
+
+        <!-- Página Assaí -->
+        <div id="page3" class="page">
+            <div class="store-total-card">
+                <div>Total Assaí</div>
+                <div style="font-size: 20px; font-weight: bold;" id="assai-total">R$ 0,00</div>
+                <div style="font-size: 12px; opacity: 0.8;">Aceita apenas V.A</div>
+            </div>
+            <div id="assai-list"></div>
+        </div>
+
+        <!-- Página Sacolão -->
+        <div id="page4" class="page">
+            <div class="store-total-card">
+                <div>Total Sacolão</div>
+                <div style="font-size: 20px; font-weight: bold;" id="sacolao-total">R$ 0,00</div>
+                <div style="font-size: 12px; opacity: 0.8;">Não aceita vouchers</div>
+            </div>
+            <div id="sacolao-list"></div>
+        </div>
+
+        <!-- Página Resumo -->
+        <div id="page5" class="page">
+            <div class="summary-card" id="summary-content">
+                <!-- O conteúdo será gerado pelo JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== LISTAS COMPLETAS DE PRODUTOS ==========
+        var produtosNagumo = [
+            {grupo: "Básicos", itens: ["Arroz", "Feijão", "Açúcar", "Sal", "Farinha Trigo", "Maisena", "Tapioca"]},
+            {grupo: "Massas", itens: ["Macarrão Penne", "Macarrão Espaguete", "Molho Pronto"]},
+            {grupo: "Óleos e Temperos", itens: ["Óleo Soja", "Azeite", "Óleo Carmelita", "Vinagre", "Sazon Sachê"]},
+            {grupo: "Conservas", itens: ["Milho Lata"]},
+            {grupo: "Bebidas", itens: ["Café", "Nescau", "Guaraná Zero 2L", "Pepsi Zero 2L", "Sprite Zero 2L"]},
+            {grupo: "Laticínios", itens: ["Leite 1L", "Margarina", "Creme Leite", "Leite Condensado", "Leite Moça"]},
+            {grupo: "Condimentos", itens: ["Maionese", "Katchp", "Mostarda"]},
+            {grupo: "Pães e Biscoitos", itens: ["Pão Forma", "Bisnaguinha", "Bolacha Waffer", "Rosq. Côco", "Bolacha Maisena", "Bolacha Club Social"]},
+            {grupo: "Utilidades", itens: ["Coador", "Ovos 20 unid"]},
+            {grupo: "Salgadinhos", itens: ["Salgadinho", "Pipoca Doce", "Salgadinhos"]},
+            {grupo: "Carnes", itens: ["Toscana granel", "Carne Moída", "Carne Bife", "Carne Panela"]},
+            {grupo: "Frios", itens: ["Mussarela", "Presunto", "Pão Francês"]},
+            {grupo: "Frutas", itens: ["Laranja", "Banana", "Maçã", "Manga", "Pera"]},
+            {grupo: "Verduras e Legumes", itens: ["Alface", "Tomate", "Cebola", "Batata", "Pepino"]},
+            {grupo: "Higiene", itens: ["Papel toalha", "Papel Hig. 24rl", "Papel Hig. 32rl", "Shampoo", "Desodorante", "Sabonete", "Pasta de Dente"]},
+            {grupo: "Limpeza", itens: ["Sabão", "Amaciante", "Detergente", "Desinfetante", "Água Sanitária", "Pedra Vaso"]}
+        ];
+
+        var produtosAssai = [
+            {grupo: "Congelados", itens: ["Frango Congelado", "Calabresa PCT", "Toscana PCT", "Nuguets PCT", "Hamburguer CX", "Batata Palito", "Salsicha PCT", "Legumes Congelados"]},
+            {grupo: "Laticínios", itens: ["Leite Cx", "Iogurte Natural", "Iogurte Sabor", "Margarina 500g", "Requijão"]},
+            {grupo: "Óleos e Conservas", itens: ["Carmelita", "Azeite", "Atum"]},
+            {grupo: "Ovos e Frios", itens: ["Ovos 20 unid", "Mussarela", "Presunto", "Peito Frango Def."]},
+            {grupo: "Farinhas e Temperos", itens: ["Farinha de Rosca"]},
+            {grupo: "Salgadinhos e Bebidas", itens: ["Salgadinhos", "Guaraná Zero 2L", "Pepsi Zero 2L", "Sprite Zero 2L"]},
+            {grupo: "Pães e Biscoitos", itens: ["Pão Francês", "Pão de Forma", "Bisnaguinha", "Bolacha Waffer", "Bolacha recheada", "Bolacha Maisena", "Pipoca Doce", "Milho de Pipoca"]},
+            {grupo: "Frutas", itens: ["Banana", "Maçã", "Pera", "Laranja", "Morango", "Mamão", "Limão", "Ciciliano"]},
+            {grupo: "Verduras e Legumes", itens: ["Tomate", "Alface", "Pepino", "Brócolis", "Cebola"]}
+        ];
+
+        var produtosSacolao = [
+            {grupo: "Frutas", itens: ["Banana", "Maçã", "Pera", "Laranja", "Manga", "Mamão", "Limão", "Ceciliano", "Morango"]},
+            {grupo: "Verduras e Legumes", itens: ["Tomate", "Alface", "Cebola", "Batata", "Cenoura", "Pepino", "Brócolis", "Repolho", "Couve", "Couve Flor"]}
+        ];
+
+        // ========== SISTEMA DE MESES ==========
+        function carregarMeses() {
+            var select = document.getElementById('month-select');
+            select.innerHTML = '';
+            
+            var meses = [];
+            var data = new Date(2025, 10, 1); // Novembro 2025
+            
+            for (var i = 0; i < 60; i++) { // 5 anos = 60 meses
+                var ano = data.getFullYear();
+                var mes = data.getMonth();
+                var texto = getNomeMes(mes) + ' ' + ano;
+                var valor = ano + '-' + (mes + 1).toString().padStart(2, '0');
+                
+                meses.push({valor: valor, texto: texto});
+                data.setMonth(data.getMonth() + 1);
+            }
+            
+            for (var i = 0; i < meses.length; i++) {
+                var option = document.createElement('option');
+                option.value = meses[i].valor;
+                option.textContent = meses[i].texto;
+                select.appendChild(option);
+            }
+        }
+
+        function getNomeMes(mes) {
+            var meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junio', 
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            return meses[mes];
+        }
+
+        // ========== SISTEMA DE NAVEGAÇÃO ==========
+        function showPage(pageNumber) {
+            var pages = document.querySelectorAll('.page');
+            for (var i = 0; i < pages.length; i++) {
+                pages[i].style.display = 'none';
+                pages[i].className = 'page';
+            }
+            
+            var tabs = document.querySelectorAll('.tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].className = 'tab';
+            }
+            
+            document.getElementById('page' + pageNumber).style.display = 'block';
+            document.getElementById('page' + pageNumber).className = 'page active';
+            document.getElementById('tab' + pageNumber).className = 'tab active';
+            
+            if (pageNumber === 5) {
+                atualizarResumo();
+            }
+        }
+
+        // ========== CARREGAR LISTAS DE PRODUTOS ==========
+        function carregarListas() {
+            carregarLista('nagumo-list', produtosNagumo);
+            carregarLista('assai-list', produtosAssai);
+            carregarLista('sacolao-list', produtosSacolao);
+        }
+
+        function carregarLista(elementId, produtos) {
+            var lista = document.getElementById(elementId);
+            lista.innerHTML = '';
+            
+            for (var g = 0; g < produtos.length; g++) {
+                var grupo = produtos[g];
+                
+                // Cabeçalho do grupo
+                var header = document.createElement('div');
+                header.className = 'group-header';
+                header.innerHTML = '<span>' + grupo.grupo + '</span>';
+                lista.appendChild(header);
+                
+                // Labels das colunas
+                var labels = document.createElement('div');
+                labels.className = 'column-labels';
+                labels.innerHTML = '<span>PRODUTO</span><span>QTD</span><span>VALOR</span><span>TOTAL</span>';
+                lista.appendChild(labels);
+                
+                // Itens do grupo
+                for (var i = 0; i < grupo.itens.length; i++) {
+                    var produtoId = elementId + '-' + g + '-' + i;
+                    
+                    var item = document.createElement('div');
+                    item.className = 'product-item';
+                    item.innerHTML = '<div class="product-info"><div class="product-name">' + grupo.itens[i] + '</div></div>' +
+                                   '<input type="number" class="quantity-input" placeholder="0" value="0" min="0" onfocus="this.select()" onchange="calcularTotal(\'' + produtoId + '\')">' +
+                                   '<input type="number" class="price-input" placeholder="0.00" value="0" step="0.01" min="0" onfocus="this.select()" onchange="calcularTotal(\'' + produtoId + '\')">' +
+                                   '<div class="total-display" id="total-' + produtoId + '">R$ 0,00</div>';
+                    lista.appendChild(item);
+                }
+            }
+        }
+
+        // ========== CÁLCULOS ==========
+        function calcularTotal(produtoId) {
+            var inputs = document.querySelectorAll('input');
+            var totalElement = document.getElementById('total-' + produtoId);
+            var quantidade = 0;
+            var preco = 0;
+            
+            for (var i = 0; i < inputs.length; i++) {
+                if (inputs[i].parentNode.querySelector('#total-' + produtoId)) {
+                    if (inputs[i].className === 'quantity-input') {
+                        quantidade = parseFloat(inputs[i].value) || 0;
+                    } else if (inputs[i].className === 'price-input') {
+                        preco = parseFloat(inputs[i].value) || 0;
+                    }
+                }
+            }
+            
+            var total = quantidade * preco;
+            totalElement.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+            
+            atualizarTotaisLojas();
+            atualizarOrcamento();
+        }
+
+        function atualizarTotaisLojas() {
+            var totais = {nagumo: 0, assai: 0, sacolao: 0};
+            var totaisElementos = {
+                nagumo: document.getElementById('nagumo-total'),
+                assai: document.getElementById('assai-total'),
+                sacolao: document.getElementById('sacolao-total')
+            };
+            
+            var produtos = document.querySelectorAll('.product-item');
+            for (var i = 0; i < produtos.length; i++) {
+                var totalTexto = produtos[i].querySelector('.total-display').textContent;
+                var totalValor = parseFloat(totalTexto.replace('R$ ', '').replace(',', '.')) || 0;
+                
+                if (produtos[i].parentNode.id === 'nagumo-list') {
+                    totais.nagumo += totalValor;
+                } else if (produtos[i].parentNode.id === 'assai-list') {
+                    totais.assai += totalValor;
+                } else if (produtos[i].parentNode.id === 'sacolao-list') {
+                    totais.sacolao += totalValor;
+                }
+            }
+            
+            for (var loja in totais) {
+                totaisElementos[loja].textContent = 'R$ ' + totais[loja].toFixed(2).replace('.', ',');
+            }
+        }
+
+        function atualizarOrcamento() {
+            var orcamento = parseFloat(document.getElementById('initial-budget').value) || 0;
+            var totalGasto = 0;
+            
+            var totais = document.querySelectorAll('.store-total-card div:nth-child(2)');
+            for (var i = 0; i < totais.length; i++) {
+                var valor = parseFloat(totais[i].textContent.replace('R$ ', '').replace(',', '.')) || 0;
+                totalGasto += valor;
+            }
+            
+            var saldo = orcamento - totalGasto;
+            
+            document.getElementById('spent-value').textContent = 'R$ ' + totalGasto.toFixed(2).replace('.', ',');
+            document.getElementById('remaining-value').textContent = 'R$ ' + saldo.toFixed(2).replace('.', ',');
+            
+            // Cor do saldo
+            var saldoElement = document.getElementById('remaining-value');
+            if (saldo < 0) {
+                saldoElement.style.color = '#ff6b6b';
+            } else if (saldo < orcamento * 0.1) {
+                saldoElement.style.color = '#ffa500';
+            } else {
+                saldoElement.style.color = '#51cf66';
+            }
+        }
+
+        function atualizarResumo() {
+            var orcamento = parseFloat(document.getElementById('initial-budget').value) || 0;
+            var totalGasto = parseFloat(document.getElementById('spent-value').textContent.replace('R$ ', '').replace(',', '.')) || 0;
+            var saldo = orcamento - totalGasto;
+            var mesSelecionado = document.getElementById('month-select').options[document.getElementById('month-select').selectedIndex].text;
+            
+            var resumoHTML = '<div class="summary-row"><span>Mês:</span><span>' + mesSelecionado + '</span></div>' +
+                           '<div class="summary-row"><span>Orçamento Inicial:</span><span>R$ ' + orcamento.toFixed(2).replace('.', ',') + '</span></div>' +
+                           '<div class="summary-row"><span>Total Nagumo:</span><span>' + document.getElementById('nagumo-total').textContent + '</span></div>' +
+                           '<div class="summary-row"><span>Total Assaí:</span><span>' + document.getElementById('assai-total').textContent + '</span></div>' +
+                           '<div class="summary-row"><span>Total Sacolão:</span><span>' + document.getElementById('sacolao-total').textContent + '</span></div>' +
+                           '<div class="summary-row"><span>Total Gasto:</span><span>R$ ' + totalGasto.toFixed(2).replace('.', ',') + '</span></div>' +
+                           '<div class="summary-row"><span>Saldo Restante:</span><span style="color: ' + (saldo >= 0 ? '#51cf66' : '#ff6b6b') + '">R$ ' + saldo.toFixed(2).replace('.', ',') + '</span></div>';
+            
+            document.getElementById('summary-content').innerHTML = resumoHTML;
+        }
+
+        // ========== EVENT LISTENERS ==========
+        document.getElementById('tab1').onclick = function() { showPage(1); };
+        document.getElementById('tab2').onclick = function() { showPage(2); };
+        document.getElementById('tab3').onclick = function() { showPage(3); };
+        document.getElementById('tab4').onclick = function() { showPage(4); };
+        document.getElementById('tab5').onclick = function() { showPage(5); };
+
+        document.getElementById('initial-budget').oninput = function() {
+            atualizarOrcamento();
+            if (document.getElementById('page5').style.display === 'block') {
+                atualizarResumo();
+            }
+        };
+
+        document.getElementById('month-select').onchange = function() {
+            if (document.getElementById('page5').style.display === 'block') {
+                atualizarResumo();
+            }
+        };
+
+        function saveAllData() {
+            alert('💾 Dados salvos com sucesso!');
+            // Aqui você pode adicionar o código para salvar no localStorage se quiser
+        }
+
+        // ========== INICIALIZAÇÃO ==========
+        window.onload = function() {
+            carregarMeses();
+            carregarListas();
+            showPage(1);
+            
+            // Focar e selecionar automaticamente os inputs
+            var inputs = document.querySelectorAll('input[type="number"]');
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].onfocus = function() {
+                    this.select();
+                };
+            }
+        };
+    </script>
+</body>
+</html>
