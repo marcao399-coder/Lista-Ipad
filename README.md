@@ -412,48 +412,85 @@
             transition: all 0.3s ease;
             min-height: 44px;
             min-width: 44px;
+            z-index: 101;
         }
 
         .save-button:hover {
             background: rgba(255,255,255,0.3);
         }
 
-        /* Melhorias específicas para iPad */
-        @media (max-width: 1024px) and (hover: none) {
+        /* CORREÇÕES ESPECÍFICAS PARA IPAD */
+        @media (max-width: 1024px) {
+            /* Melhorar navegação por toque */
+            .tab-button {
+                min-height: 60px;
+                font-size: 14px;
+                padding: 18px 8px;
+                touch-action: manipulation;
+            }
+            
+            /* Ajustar grid dos produtos para iPad */
             .product-item {
                 grid-template-columns: 40px 1fr 100px 110px 120px;
-                gap: 10px;
-                padding: 12px;
-            }
-            
-            .tab-button {
-                font-size: 13px;
-                padding: 14px 8px;
-                min-height: 60px;
-            }
-            
-            .search-input {
+                gap: 12px;
+                padding: 15px;
                 font-size: 16px;
             }
             
-            .quantity-input, .price-input {
-                font-size: 15px;
-                height: 44px;
+            /* Aumentar áreas de toque */
+            .quantity-input, 
+            .price-input {
+                min-height: 50px;
+                font-size: 16px;
+                padding: 15px 8px;
             }
             
             .total-display {
-                height: 44px;
-                font-size: 15px;
+                min-height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+            }
+            
+            /* Melhorar cabeçalho fixo */
+            .header {
+                position: sticky;
+                top: 0;
+                padding-bottom: 20px;
+            }
+            
+            .tabs {
+                top: 160px;
+            }
+            
+            .group-header {
+                top: 220px;
+            }
+            
+            /* Correção do botão salvar para iPad */
+            .save-button {
+                right: 20px;
+                top: 60px;
+                transform: none;
+                background: rgba(255,255,255,0.3);
+                backdrop-filter: blur(10px);
             }
         }
 
-        /* Para iPad Mini em portrait */
+        /* Para iPad Mini e telas menores */
         @media (max-width: 768px) {
             .product-item {
-                grid-template-columns: 35px 1fr 85px 95px 100px;
+                grid-template-columns: 35px 1fr 80px 90px 100px;
                 gap: 8px;
-                padding: 10px;
+                padding: 12px;
                 font-size: 14px;
+            }
+            
+            .quantity-input, 
+            .price-input {
+                font-size: 14px;
+                padding: 12px 6px;
             }
             
             .budget-grid {
@@ -1067,6 +1104,128 @@
         document.getElementById('sacolao-total').textContent = `R$ ${storeTotals.sacolao.toFixed(2).replace('.', ',')}`;
     }
 
+    // 🔥 CORREÇÃO DA FUNÇÃO showPage() - Versão Corrigida
+    function showPage(pageId) {
+        console.log('Mostrando página:', pageId);
+        
+        // Esconder todas as páginas
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        
+        // Mostrar página selecionada
+        const targetPage = document.getElementById(`${pageId}-page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+            console.log('Página ativada:', pageId);
+        }
+        
+        // Atualizar botões de navegação - CORREÇÃO SIMPLIFICADA
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mapeamento direto entre pageId e texto do botão
+        const buttonMap = {
+            'budget': 'Orçamento',
+            'nagumo': 'Nagumo', 
+            'assai': 'Assaí',
+            'sacolao': 'Sacolão',
+            'summary': 'Resumo'
+        };
+        
+        // Encontrar e ativar o botão correto
+        const buttons = document.querySelectorAll('.tab-button');
+        buttons.forEach(btn => {
+            if (btn.textContent.trim() === buttonMap[pageId]) {
+                btn.classList.add('active');
+                console.log('Botão ativado:', btn.textContent);
+            }
+        });
+        
+        // Atualizar resumo se necessário
+        if (pageId === 'summary') {
+            updateSummary();
+        }
+        
+        // Atualizar totais
+        updateStoreTotals();
+    }
+
+    function updateSummary() {
+        const summaryContent = document.getElementById('summary-content');
+        const currentMonthData = monthlyData[currentMonth];
+        
+        if (!currentMonthData) {
+            summaryContent.innerHTML = `
+                <div class="summary-row">
+                    <span class="summary-label">ℹ️</span>
+                    <span class="summary-value">Nenhum dado para ${formatMonthName(currentMonth)}</span>
+                </div>
+            `;
+            return;
+        }
+        
+        const storeStats = {
+            nagumo: { purchased: 0, total: 0 },
+            assai: { purchased: 0, total: 0 },
+            sacolao: { purchased: 0, total: 0 }
+        };
+        
+        // Calcular totais por loja
+        Object.entries(currentMonthData.products || {}).forEach(([productKey, productData]) => {
+            const [store] = productKey.split('-');
+            const total = (productData.quantity || 0) * (productData.price || 0);
+            
+            if (total > 0 && storeStats[store]) {
+                storeStats[store].purchased++;
+                storeStats[store].total += total;
+            }
+        });
+        
+        const totalSpent = storeStats.nagumo.total + storeStats.assai.total + storeStats.sacolao.total;
+        const totalPurchased = storeStats.nagumo.purchased + storeStats.assai.purchased + storeStats.sacolao.purchased;
+        const budget = currentMonthData.budget || 0;
+        const remaining = budget - totalSpent;
+        
+        summaryContent.innerHTML = `
+            <div class="summary-row">
+                <span class="summary-label">📅 Mês:</span>
+                <span class="summary-value">${formatMonthName(currentMonth)}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">💰 Orçamento Inicial:</span>
+                <span class="summary-value">R$ ${budget.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">🏪 Nagumo:</span>
+                <span class="summary-value">R$ ${storeStats.nagumo.total.toFixed(2).replace('.', ',')} (${storeStats.nagumo.purchased} itens)</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">🛒 Assaí:</span>
+                <span class="summary-value">R$ ${storeStats.assai.total.toFixed(2).replace('.', ',')} (${storeStats.assai.purchased} itens)</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">🥬 Sacolão:</span>
+                <span class="summary-value">R$ ${storeStats.sacolao.total.toFixed(2).replace('.', ',')} (${storeStats.sacolao.purchased} itens)</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">✓ Total de Itens:</span>
+                <span class="summary-value">${totalPurchased} itens</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">💰 Total Gasto:</span>
+                <span class="summary-value">R$ ${totalSpent.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">💵 Saldo Restante:</span>
+                <span class="summary-value" style="color: ${remaining >= 0 ? '#51cf66' : '#ff6b6b'}">
+                    R$ ${remaining.toFixed(2).replace('.', ',')}
+                </span>
+            </div>
+        `;
+    }
+
     // Sistema de salvamento ATUALIZADO para múltiplos meses
     function saveAllData() {
         autoSaveData();
@@ -1167,136 +1326,6 @@
         if (currentGroup && !groupHasVisibleItems) {
             currentGroup.style.display = 'none';
         }
-    }
-
-    // 🔥 CORREÇÃO DA FUNÇÃO showPage() - Versão Simplificada
-    function showPage(pageId) {
-        console.log('Tentando mostrar página:', pageId);
-        
-        // Esconder todas as páginas
-        document.querySelectorAll('.page').forEach(page => {
-            page.classList.remove('active');
-        });
-        
-        // Mostrar página selecionada
-        const targetPage = document.getElementById(`${pageId}-page`);
-        if (targetPage) {
-            targetPage.classList.add('active');
-            console.log('Página encontrada e ativada:', pageId);
-        } else {
-            console.error('Página não encontrada:', `${pageId}-page`);
-        }
-        
-        // Atualizar botões de navegação - CORREÇÃO AQUI
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Ativar botão correto baseado no texto
-        const activeButton = Array.from(document.querySelectorAll('.tab-button')).find(btn => {
-            const buttonText = btn.textContent.toLowerCase();
-            console.log('Verificando botão:', buttonText, 'para página:', pageId);
-            
-            // Mapeamento direto entre texto do botão e pageId
-            const mapping = {
-                'orçamento': 'budget',
-                'nagumo': 'nagumo', 
-                'assaí': 'assai',
-                'sacolão': 'sacolao',
-                'resumo': 'summary'
-            };
-            
-            return mapping[buttonText] === pageId;
-        });
-        
-        if (activeButton) {
-            activeButton.classList.add('active');
-            console.log('Botão ativado:', activeButton.textContent);
-        } else {
-            console.error('Botão não encontrado para página:', pageId);
-        }
-        
-        // Atualizar resumo se necessário
-        if (pageId === 'summary') {
-            updateSummary();
-        }
-        
-        // Atualizar totais da loja atual
-        updateStoreTotals();
-    }
-
-    function updateSummary() {
-        const summaryContent = document.getElementById('summary-content');
-        const currentMonthData = monthlyData[currentMonth];
-        
-        if (!currentMonthData) {
-            summaryContent.innerHTML = `
-                <div class="summary-row">
-                    <span class="summary-label">ℹ️</span>
-                    <span class="summary-value">Nenhum dado para ${formatMonthName(currentMonth)}</span>
-                </div>
-            `;
-            return;
-        }
-        
-        const storeStats = {
-            nagumo: { purchased: 0, total: 0 },
-            assai: { purchased: 0, total: 0 },
-            sacolao: { purchased: 0, total: 0 }
-        };
-        
-        // Calcular totais por loja
-        Object.entries(currentMonthData.products || {}).forEach(([productKey, productData]) => {
-            const [store] = productKey.split('-');
-            const total = (productData.quantity || 0) * (productData.price || 0);
-            
-            if (total > 0 && storeStats[store]) {
-                storeStats[store].purchased++;
-                storeStats[store].total += total;
-            }
-        });
-        
-        const totalSpent = storeStats.nagumo.total + storeStats.assai.total + storeStats.sacolao.total;
-        const totalPurchased = storeStats.nagumo.purchased + storeStats.assai.purchased + storeStats.sacolao.purchased;
-        const budget = currentMonthData.budget || 0;
-        const remaining = budget - totalSpent;
-        
-        summaryContent.innerHTML = `
-            <div class="summary-row">
-                <span class="summary-label">📅 Mês:</span>
-                <span class="summary-value">${formatMonthName(currentMonth)}</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">💰 Orçamento Inicial:</span>
-                <span class="summary-value">R$ ${budget.toFixed(2).replace('.', ',')}</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">🏪 Nagumo:</span>
-                <span class="summary-value">R$ ${storeStats.nagumo.total.toFixed(2).replace('.', ',')} (${storeStats.nagumo.purchased} itens)</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">🛒 Assaí:</span>
-                <span class="summary-value">R$ ${storeStats.assai.total.toFixed(2).replace('.', ',')} (${storeStats.assai.purchased} itens)</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">🥬 Sacolão:</span>
-                <span class="summary-value">R$ ${storeStats.sacolao.total.toFixed(2).replace('.', ',')} (${storeStats.sacolao.purchased} itens)</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">✓ Total de Itens:</span>
-                <span class="summary-value">${totalPurchased} itens</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">💰 Total Gasto:</span>
-                <span class="summary-value">R$ ${totalSpent.toFixed(2).replace('.', ',')}</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">💵 Saldo Restante:</span>
-                <span class="summary-value" style="color: ${remaining >= 0 ? '#51cf66' : '#ff6b6b'}">
-                    R$ ${remaining.toFixed(2).replace('.', ',')}
-                </span>
-            </div>
-        `;
     }
 
     // Inicializar quando a página carregar
